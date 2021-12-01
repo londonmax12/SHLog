@@ -3,7 +3,7 @@
 int main() {
 	shlog::ConsoleLogger logger;
 
-	logger.SetPattern("(%t) %m");
+	logger.SetPattern("[%s] %t: %m");
 
-	logger.Log("Test");
+	logger.Info("Error");
 }
