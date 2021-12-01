@@ -3,6 +3,8 @@
 int main() {
 	shlog::ConsoleLogger logger;
 
+	logger.SetPattern("%c[%su] %d %t: %m");
+
 	logger.Trace("This is a test");
 	logger.Info("This is a test");
 	logger.Warn("This is a test");
