@@ -8,15 +8,18 @@
 #include <chrono>
 #include <iomanip>
 
+#include <windows.h>
+
 /*
 	Pattern Keys:
 	%t = Current time (eg. 01:20:03)
 	%s = Severity (eg. warn, info)
+	%c = Severity color
 	%m = Message 
 */
 
 namespace shlog {
-	std::string GetCurrentTime() {
+	std::string GetCurrentTimeAsString() {
 		auto t = std::time(nullptr);
 		auto tm = *std::localtime(&t);
 
@@ -27,7 +30,11 @@ namespace shlog {
 
 	enum LogType
 	{
-		Trace, Info, Warn, Error, Critical
+		Trace = 0,
+		Info = 1,
+		Warn = 2,
+		Error = 3,
+		Critical = 4
 	};
 
 	std::string LogTypeToString(LogType type)
@@ -39,6 +46,17 @@ namespace shlog {
 		case shlog::Warn: return "warn";
 		case shlog::Error: return "error";
 		case shlog::Critical: return "critical";
+		}
+	}
+	int LogTypeToWindowsColorNum(LogType type)
+	{
+		switch (type)
+		{
+		case shlog::Trace: return 7;
+		case shlog::Info: return 10;
+		case shlog::Warn: return 14;
+		case shlog::Error: return 12;
+		case shlog::Critical: return 4;
 		}
 	}
 
@@ -68,18 +86,26 @@ namespace shlog {
 		void Log(std::string message, LogType type) {
 			std::string finalMsg = m_Pattern;
 
+			HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+
 			if (finalMsg.find("%t") != std::string::npos)
-				finalMsg.replace(finalMsg.find("%t"), 2, GetCurrentTime());
+				finalMsg.replace(finalMsg.find("%t"), 2, GetCurrentTimeAsString());
 			if (finalMsg.find("%s") != std::string::npos)
 				finalMsg.replace(finalMsg.find("%s"), 2, LogTypeToString(type));
 			if (finalMsg.find("%m") != std::string::npos)
 				finalMsg.replace(finalMsg.find("%m"), 2, message);
+			if (finalMsg.find("%c") != std::string::npos)
+			{
+				SetConsoleTextAttribute(h, LogTypeToWindowsColorNum(type));
+				finalMsg.replace(finalMsg.find("%c"), 2, "");
+			}
 
 			std::cout << finalMsg << "\n";
+			SetConsoleTextAttribute(h, 7);
 		}
 
 		void SetPattern(std::string pattern) { m_Pattern = pattern; }
 	private:
-		std::string m_Pattern = "[%s] %t: %m";
+		std::string m_Pattern = "%c[%s] %t: %m";
 	};
 }
